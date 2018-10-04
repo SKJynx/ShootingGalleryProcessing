@@ -1,0 +1,230 @@
+/*Shooting Range - Nicholas Yee
+ 
+ Shooting a target increases your score by one, and the higher your score the faster the timer will run. Once the timer reaches zero, your score resets and the game starts over. Missing a target will also restart the game and score as well. 
+ Old code and debug methods left in to help show process work.
+ 
+ */
+
+//Sets variables
+boolean gunFired = false;
+float targetX = 0;
+float targetY = 0;
+
+boolean targetMissed = false;
+int targetMissedTimer = 0;
+
+boolean timeUp = false;
+int gameTimeUp = 0;
+
+int score = 0;
+int timer = 0;
+//rng needs to have a value set to allow the target to appear in one of the 6 holes. I used random() so the target would be different everytime the game was launched.
+int rng = int(random(1,7));
+int highScore = 0;
+
+
+//Setup to remove the cursor and stroke from the sketch.
+void setup() {
+  size (400, 400);
+  frameRate(60);
+  rectMode(CENTER);
+  noCursor();
+  noStroke();
+}
+
+
+
+void draw() {
+  //Resets the background each frame
+  background(100, 200, 200);
+  
+  //Draws the functions below void draw()
+  drawScreen();
+  drawTable();
+  drawHoles();
+
+  //Debug tool used to check when the gun was being fired for testing purposes.
+  //if (gunFired) {
+  //  text("gun fired = true", 150, 100);
+  //}
+
+
+  //Timer to determine the value of "rng" as well as control the speed of each round the higher your score is. rng function used to create a value of 1-6, which represented one of the 6 targets that could appear.
+  timer = int(timer + 1 + 0.08*score);
+  if (timer>120) {
+    rng = int(random(1, 7));
+    if (score >= highScore) {
+      highScore = score;
+    }
+    timer = 0;
+    score=0;
+  }
+  //Displays score & timer text. Function below is to have a timer counting down from "10" valued at 2 seconds ucosg a math equation, and to have a timer to display the "X" on the screen for 30 frames each time you miss.
+  //Function also holds high score values and updates it every time the counter runs out. This needs to be done twice, once for miscosg a target and once for time running out.
+
+  fill(255, 0, 0);
+  textSize(32);
+  text("Score: "+score, 140, 150);
+  //text(10-timer/12, 190, 180);
+  fill(timer, timer, timer, 150);
+  rect(200, 20, 400-timer*3.33333, 40);
+  fill(80, 200, 80);
+  textSize(16);
+  text("High Score: "+highScore, 150, 220+sin(frameCount*0.10));
+
+
+  if (targetMissed) {
+    targetMissedTimer++;
+
+    if (targetMissedTimer > 0) {
+      textSize(150);
+      fill(255, 0, 0, 200);
+      text("X", 160, 230);
+    }
+
+    if (targetMissedTimer > 30) {
+      targetMissedTimer = 0;
+      targetMissed = false;
+    }
+  }
+
+
+  //rng function to display where to show each target, rng == one of the targets. drawTarget(X, Y) setting the location for each type of target.
+  if (rng == 1) {
+    drawTarget(120, 220);
+  }
+  if (rng == 2) {
+    drawTarget(200, 220);
+  }
+  if (rng == 3) {
+    drawTarget(280, 220);
+  }
+  if (rng == 4) {
+    drawTarget(100, 240);
+  }
+  if (rng == 5) {
+    drawTarget(200, 240);
+  }
+  if (rng == 6) {
+    drawTarget(300, 240);
+  }
+
+  drawGun();
+
+  //Custom Reticle
+  fill (255, 100, 100, 255);
+  ellipse(mouseX, mouseY, 5, 5);
+}
+
+void mousePressed() {
+
+  //Function to check if the mouse is within the parameters (hitbox) of the target. If it is hit, reset the timer and change the location of the target ucosg the "rng" function. If clicked outside of the parameters, set the targetMissed to "true".
+  //This function also holds the high score values if the mouse misses a target..
+  if (mouseX>=targetX-20 && mouseX<=targetX+20 && mouseY>=targetY-20 && mouseY<=targetY+20) {
+    score++;
+    timer=0;
+    rng = int(random(1, 7));
+  } else if (score >= highScore) {
+    highScore = score;
+    rng = int(random(1, 7));
+    targetMissed = true;
+    score=0;
+  } else {
+    score=0;
+    timer=0;
+    rng = int(random(1, 7));
+    targetMissed = true;
+  }
+  //Draws the muzzle flash upon clicking.
+  fill(255, 251, 44, 200);
+  ellipse(mouseX+70, mouseY+80, random(150, 250), random(150, 250));
+
+  drawGun();
+}
+
+//Draws the screen and bezel.
+void drawScreen() {
+  fill(150, 150, 150);
+  rect(200, 300, 200, 400);
+  fill(50, 50, 50);
+  rect(200, 175, 180, 130);
+}
+
+//Draws both sections of the dock for the game.
+void drawTable() {
+  fill(150, 150, 150);
+  rect(200, 400, 300, 200);
+  fill(100, 100, 100);
+  quad(100, 250, 300, 250, 350, 300, 50, 300);
+}
+
+//Draws the holes on the table
+void drawHoles() {
+  //Row 1
+  fill(0);
+  ellipse(120, 260, 40, 10);
+  fill(0);
+  ellipse(200, 260, 40, 10);
+  fill(0);
+  ellipse(280, 260, 40, 10);
+  //Row 2
+  fill(0);
+  ellipse(100, 285, 50, 15);
+  fill(0);
+  ellipse(200, 285, 50, 15);
+  fill(0);
+  ellipse(300, 285, 50, 15);
+}
+
+//float tempX & tempY are used to check for the parameters in "mousePressed" to determine whether or not a target was clicked on. It's also used by the rng function to define each location.
+void drawTarget(float tempX, float tempY) {
+
+  //Used to convert targetX & targetY into global variables.
+  targetX = tempX;
+  targetY = tempY;
+
+  //Draw target stem.
+  fill(50, 50, 50);
+  rect(targetX, targetY+20, 10, 40);
+
+  //Loop to draw target face.
+  int red = 0;
+  for (int i = 40; i>= 10; i=i-5) {
+
+
+    fill(255, red, red);
+    ellipse(targetX, targetY, i, i);
+
+    if (red==0) {
+      red=255;
+    } else {
+      red = 0;
+    }
+  }
+}
+
+//Old debug tool to check target positions
+//  println(targetX, targetY);
+
+
+//Draws the weapon in first person with some light bobbing for aesthetic purposes.
+void drawGun() {
+  //Draws the gun handle
+  fill(100, 100, 100);
+  quad(mouseX+110+cos(frameCount*0.10), mouseY+100+cos(frameCount*0.10), mouseX+170+cos(frameCount*0.10), mouseY+100+cos(frameCount*0.10), mouseX+170+cos(frameCount*0.10), mouseY+280+cos(frameCount*0.10), mouseX+110+cos(frameCount*0.10), mouseY+280+cos(frameCount*0.10));
+  fill(130, 130, 130);
+  quad(mouseX+90+cos(frameCount*0.10), mouseY+50+cos(frameCount*0.10), mouseX+110+cos(frameCount*0.10), mouseY+100+cos(frameCount*0.10), mouseX+110+cos(frameCount*0.10), mouseY+280+cos(frameCount*0.10), mouseX+90+cos(frameCount*0.10), mouseY+240+cos(frameCount*0.10));
+
+  //Draws the barrel
+  fill(90, 90, 90);
+  quad(mouseX+50+cos(frameCount*0.10), mouseY+50+cos(frameCount*0.10), mouseX+100+cos(frameCount*0.10), mouseY+100+cos(frameCount*0.10), mouseX+100+cos(frameCount*0.10), mouseY+200+cos(frameCount*0.10), mouseX+50+cos(frameCount*0.10), mouseY+100+cos(frameCount*0.10));
+  fill(50, 50, 50);
+  quad(mouseX+100+cos(frameCount*0.10), mouseY+100+cos(frameCount*0.10), mouseX+180+cos(frameCount*0.10), mouseY+100+cos(frameCount*0.10), mouseX+180+cos(frameCount*0.10), mouseY+200+cos(frameCount*0.10), mouseX+100+cos(frameCount*0.10), mouseY+200+cos(frameCount*0.10));
+  fill(80, 80, 80);
+  quad(mouseX+130+cos(frameCount*0.10), mouseY+130+cos(frameCount*0.10), mouseX+150+cos(frameCount*0.10), mouseY+130+cos(frameCount*0.10), mouseX+150+cos(frameCount*0.10), mouseY+170+cos(frameCount*0.10), mouseX+130+cos(frameCount*0.10), mouseY+170+cos(frameCount*0.10));
+  fill(130, 130, 130);
+  quad(mouseX+50+cos(frameCount*0.10), mouseY+50+cos(frameCount*0.10), mouseX+100+cos(frameCount*0.10), mouseY+50+cos(frameCount*0.10), mouseX+180+cos(frameCount*0.10), mouseY+100+cos(frameCount*0.10), mouseX+100+cos(frameCount*0.10), mouseY+100+cos(frameCount*0.10));
+  fill(100, 100, 100);
+  rectMode(CENTER);
+  rect(mouseX+80+cos(frameCount*0.10), mouseY+50+cos(frameCount*0.10), 10, 20);
+}
